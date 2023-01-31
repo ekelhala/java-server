@@ -26,7 +26,6 @@ public class Server implements HttpHandler{
         server.createContext("/warning", new Server());
         server.setExecutor(null);
         server.start();
-        System.out.println( "Server online!" );
     }
 
     @Override

@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -81,7 +82,10 @@ public class Server implements HttpHandler{
         try {
             byte[] responseBytes = resultBuilder.toString().getBytes("UTF-8");
             exchange.sendResponseHeaders(200, responseBytes.length);
-            exchange.getResponseBody().write(responseBytes);
+            OutputStream responseOutputStream = exchange.getResponseBody();
+            responseOutputStream.write(responseBytes);
+            responseOutputStream.flush();
+            responseOutputStream.close();
         }
         catch(Exception e) {
             e.printStackTrace();

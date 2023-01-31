@@ -56,7 +56,7 @@ public class Server implements HttpHandler{
 
     /**
      * 
-     * @param exchange HttpExchange jossa on haluttu viesti
+     * @param exchange HttpExchange jossa on haluttu viesti.
      * @return Totuusarvo, joka kertoo onnistuiko viestin lisäys serverille.
      */
     private boolean handlePost(HttpExchange exchange) {

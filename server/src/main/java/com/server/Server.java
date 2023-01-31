@@ -71,7 +71,7 @@ public class Server implements HttpHandler{
     private void handleGet(HttpExchange exchange) {
         StringBuilder resultBuilder = new StringBuilder();
         if(messages.isEmpty()) {
-            resultBuilder.append("No messages");
+            resultBuilder.append("No messages!");
         }
         else {
             for(String message : messages) {

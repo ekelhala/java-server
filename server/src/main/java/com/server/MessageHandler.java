@@ -1,13 +1,9 @@
 package com.server;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.sun.net.httpserver.*;
 
@@ -67,34 +63,9 @@ public class MessageHandler implements HttpHandler{
         }
         try {
             Utils.sendResponse(resultBuilder.toString(), 200, exchange);
-            /*
-            byte[] responseBytes = resultBuilder.toString().getBytes("UTF-8");
-            exchange.sendResponseHeaders(200, responseBytes.length);
-            OutputStream responseOutputStream = exchange.getResponseBody();
-            responseOutputStream.write(responseBytes);
-            responseOutputStream.flush();
-            responseOutputStream.close();*/
         }
         catch(Exception e) {
             e.printStackTrace();
         }
-    }
-
-    /**
-     * 
-     * @param input InputStream josta halutaan tekstiä lukea
-     * @return String-objekti tai null jos lukuoperaatiota ei voitu suorittaa
-     */
-    private String read(InputStream input) {
-        String result = null;
-        try {
-        InputStreamReader reader = new InputStreamReader(input);
-        result = new BufferedReader(reader).lines().collect(Collectors.joining("\n"));
-         reader.close();
-        }
-        catch(IOException exception) {
-            exception.printStackTrace();
-        }
-        return result;
     }
 }

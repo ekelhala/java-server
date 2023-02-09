@@ -1,112 +1,57 @@
 package com.server;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.FileInputStream;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.security.KeyStore;
+
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.TrustManagerFactory;
 
 import com.sun.net.httpserver.*;
+import com.sun.net.httpserver.HttpsParameters;
 
-public class Server implements HttpHandler{
+public class Server {
 
-    private static HttpServer server;
-    private List<String> messages = new ArrayList<>();
+    private static HttpsServer server;
     public static void main( String[] args )
     {
         try {
-            server = HttpServer.create(new InetSocketAddress(8001), 0);
+            server = HttpsServer.create(new InetSocketAddress(8001), 0);
+            SSLContext ctx = getServerSSLContext(args[0], args[1]);
+            server.setHttpsConfigurator(new HttpsConfigurator(ctx) {
+                public void configure(HttpsParameters parameters) {
+                    SSLContext context = getSSLContext();
+                    SSLParameters sslParameters = context.getDefaultSSLParameters();
+                    //parameters.setSSLParameters(sslParameters);
+                }
+            });
         }
-        catch(IOException exception) {
+        catch(Exception exception) {
             exception.printStackTrace();
         }
-        server.createContext("/warning", new Server());
+        HttpContext warningContext = server.createContext("/warning", new MessageHandler());
+        UserAuthenticator auth = new UserAuthenticator();
+        server.createContext("/registration", new RegistrationHandler(auth));
+        warningContext.setAuthenticator(auth);
         server.setExecutor(null);
         server.start();
     }
 
-    @Override
-    public void handle(HttpExchange exchange) {
-        try {
-            switch(exchange.getRequestMethod().toUpperCase()) {
-                case "GET":
-                    handleGet(exchange);
-                    break;
-                case "POST":
-                    if(handlePost(exchange)) {
-                        exchange.sendResponseHeaders(200, -1);
-                    }
-                    else {
-                        exchange.sendResponseHeaders(500, -1);
-                    }
-                    break;
-                default:
-                    exchange.sendResponseHeaders(400, -1);
-                    break;
-            }
-        }
-        catch(IOException exception) {
-            exception.printStackTrace();
-        }
-    }
-
-    /**
-     * 
-     * @param exchange HttpExchange jossa on haluttu viesti.
-     * @return Totuusarvo, joka kertoo onnistuiko viestin lisäys serverille.
-     */
-    private boolean handlePost(HttpExchange exchange) {
-        InputStream postStream = exchange.getRequestBody();
-        String message = read(postStream);
-        if(message != null) {
-            messages.add(message);
-            return true;
-        }
-        return false;
-    }
-
-    private void handleGet(HttpExchange exchange) {
-        StringBuilder resultBuilder = new StringBuilder();
-        if(messages.isEmpty()) {
-            resultBuilder.append("No messages!");
-        }
-        else {
-            for(String message : messages) {
-                resultBuilder.append(message);            
-            }
-        }
-        try {
-            byte[] responseBytes = resultBuilder.toString().getBytes("UTF-8");
-            exchange.sendResponseHeaders(200, responseBytes.length);
-            OutputStream responseOutputStream = exchange.getResponseBody();
-            responseOutputStream.write(responseBytes);
-            responseOutputStream.flush();
-            responseOutputStream.close();
-        }
-        catch(Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * 
-     * @param input InputStream josta halutaan tekstiä lukea
-     * @return String-objekti tai null jos lukuoperaatiota ei voitu suorittaa
-     */
-    private String read(InputStream input) {
-        String result = null;
-        try {
-        InputStreamReader reader = new InputStreamReader(input);
-        result = new BufferedReader(reader).lines().collect(Collectors.joining("\n"));
-         reader.close();
-        }
-        catch(IOException exception) {
-            exception.printStackTrace();
-        }
-        return result;
+    private static SSLContext getServerSSLContext(String keyStoreName, String password) throws Exception {
+        char[] passphrase = password.toCharArray();
+        KeyStore ks = KeyStore.getInstance("JKS");
+        ks.load(new FileInputStream(keyStoreName), passphrase);
+     
+        KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+        kmf.init(ks, passphrase);
+     
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+        tmf.init(ks);
+     
+        SSLContext ssl = SSLContext.getInstance("TLS");
+        ssl.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+        return ssl;
     }
 }

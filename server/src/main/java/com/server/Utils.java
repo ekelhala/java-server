@@ -29,6 +29,13 @@ public abstract class Utils {
         return result;
     }
 
+    /**
+     * Lähettää vastauksen määriteltyyn requestiin
+     * @param responseText Vastausteksti
+     * @param status Vastauksen statuskoodi
+     * @param withExchange Vastauksen kohde
+     * @throws IOException Jos vastausstreamiin kirjoittaessa tapahtuu virhe
+     */
     public static void sendResponse(String responseText, int status, HttpExchange withExchange) throws IOException {
         byte[] responseMsg = responseText.getBytes("UTF-8");
         withExchange.sendResponseHeaders(status, responseMsg.length);

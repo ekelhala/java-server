@@ -5,11 +5,15 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import com.sun.net.httpserver.*;
 
 public class MessageHandler implements HttpHandler{
     
-    private List<String> messages = new ArrayList<>();
+    private List<WarningMessage> messages = new ArrayList<>();
 
     @Override
     public void handle(HttpExchange exchange) {
@@ -23,11 +27,11 @@ public class MessageHandler implements HttpHandler{
                         exchange.sendResponseHeaders(200, -1);
                     }
                     else {
-                        exchange.sendResponseHeaders(500, -1);
+                        Utils.sendResponse("Request body not valid JSON", 400, exchange);
                     }
                     break;
                 default:
-                    exchange.sendResponseHeaders(400, -1);
+                    Utils.sendResponse("Not supported", 400, exchange);
                     break;
             }
         }
@@ -44,28 +48,38 @@ public class MessageHandler implements HttpHandler{
     private boolean handlePost(HttpExchange exchange) {
         InputStream postStream = exchange.getRequestBody();
         String message = Utils.read(postStream);
-        if(message != null) {
-            messages.add(message);
-            return true;
+        try {
+            WarningMessage addMessage = WarningMessage.fromJSON(new JSONObject(message));
+            messages.add(addMessage);
         }
-        return false;
+        catch(JSONException exception) {
+            return false;
+        }
+        return true;
     }
 
     private void handleGet(HttpExchange exchange) {
         StringBuilder resultBuilder = new StringBuilder();
-        if(messages.isEmpty()) {
-            resultBuilder.append("No messages!");
-        }
-        else {
-            for(String message : messages) {
-                resultBuilder.append(message);            
+        if(!messages.isEmpty()) {
+            JSONArray array = new JSONArray();
+            for(WarningMessage message : messages) {
+                array.put(message.toJSON());
+            }
+            resultBuilder.append(array.toString());
+            try {
+                Utils.sendResponse(resultBuilder.toString(), 200, exchange);
+            }
+            catch(Exception e) {
+                e.printStackTrace();
             }
         }
-        try {
-            Utils.sendResponse(resultBuilder.toString(), 200, exchange);
-        }
-        catch(Exception e) {
-            e.printStackTrace();
+        else {
+            try {
+                exchange.sendResponseHeaders(204, -1);
+            }
+            catch(IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

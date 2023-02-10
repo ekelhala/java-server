@@ -12,14 +12,14 @@ public class UserAuthenticator extends BasicAuthenticator {
     public UserAuthenticator() {
         super("warning");
         users = new ArrayList<User>();
-        users.add(new User("matti", "salasana"));
+        users.add(new User("matti", "salasana", "matti@matti.com"));
     }
 
     @Override
     public boolean checkCredentials(String username, String password) {
-        User findUser = new User(username, password);
-        if(users.contains(findUser)) {
-            return true;
+        for(User findUser : users) {
+            if(findUser.getUsername().equals(username) && findUser.getPassword().equals(password))
+                return true;
         }
         return false;
     }

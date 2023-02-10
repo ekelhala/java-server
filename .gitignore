@@ -1,3 +1,5 @@
 server/target
 keystore.jks
 .vscode
+message.json
+user.json

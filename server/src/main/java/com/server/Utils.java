@@ -44,5 +44,18 @@ public abstract class Utils {
         responseStream.flush();
         responseStream.close();
     }
+
+    public static void sendResponse(String responseText, int status,
+                                    HttpExchange withExchange, boolean isJson) throws IOException {
+        String contentType = null;
+        if(isJson) {
+            contentType = "application/json; charset=UTF-8";
+        }
+        else {
+            contentType = "text/html; charset=UTF-8";
+        }
+        withExchange.getResponseHeaders().set("Content-Type", contentType);
+        sendResponse(responseText, status, withExchange);
+    }
     
 }

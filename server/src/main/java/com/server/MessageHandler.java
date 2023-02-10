@@ -67,7 +67,7 @@ public class MessageHandler implements HttpHandler{
             }
             resultBuilder.append(array.toString());
             try {
-                Utils.sendResponse(resultBuilder.toString(), 200, exchange);
+                Utils.sendResponse(resultBuilder.toString(), 200, exchange, true);
             }
             catch(Exception e) {
                 e.printStackTrace();

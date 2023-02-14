@@ -19,11 +19,11 @@ public class WarningMessage {
     }
 
     private String nickname;
-    private String latitude;
-    private String longitude;
+    private double latitude;
+    private double longitude;
     private DangerType dangerType;
     
-    public WarningMessage(String nickname, String latitude, String longitude, DangerType dangerType) {
+    public WarningMessage(String nickname, double latitude, double longitude, DangerType dangerType) {
         this.nickname = nickname;
         this.latitude = latitude;
         this.longitude = longitude;
@@ -34,8 +34,8 @@ public class WarningMessage {
         return nickname;
     }
 
-    public String[] getCoordinates() {
-        return new String[]{latitude, longitude};
+    public double[] getCoordinates() {
+        return new double[]{latitude, longitude};
     }
 
     public DangerType getDangerType() {
@@ -49,8 +49,8 @@ public class WarningMessage {
      * @throws JSONException Jos object ei sisällä kaikkia tarvittuja kenttiä
      */
     public static WarningMessage fromJSON(JSONObject object) throws JSONException {
-        return new WarningMessage(object.getString("nickname"), object.getString("latitude"),
-                                    object.getString("longitude"), 
+        return new WarningMessage(object.getString("nickname"), object.getDouble("latitude"),
+                                    object.getDouble("longitude"), 
                                     verifyDangerType(object.getString("dangertype")));
     }
 

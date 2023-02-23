@@ -2,18 +2,22 @@ package com.server;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
+import java.sql.SQLException;
 import java.util.List;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.sun.net.httpserver.*;
 
 public class MessageHandler implements HttpHandler{
     
-    private List<WarningMessage> messages = new ArrayList<>();
+    private MessageDB db;
+
+    public MessageHandler() {
+        super();
+        db = MessageDB.getInstance();
+    }
 
     @Override
     public void handle(HttpExchange exchange) {
@@ -35,7 +39,7 @@ public class MessageHandler implements HttpHandler{
                     break;
             }
         }
-        catch(IOException exception) {
+        catch(Exception exception) {
             exception.printStackTrace();
         }
     }
@@ -45,21 +49,22 @@ public class MessageHandler implements HttpHandler{
      * @param exchange HttpExchange jossa on haluttu viesti.
      * @return Totuusarvo, joka kertoo onnistuiko viestin lisäys serverille.
      */
-    private boolean handlePost(HttpExchange exchange) {
+    private boolean handlePost(HttpExchange exchange) throws SQLException {
         InputStream postStream = exchange.getRequestBody();
         String message = Utils.read(postStream);
         try {
             WarningMessage addMessage = WarningMessage.fromJSON(new JSONObject(message));
-            messages.add(addMessage);
+            db.addNewMessage(addMessage);
         }
-        catch(JSONException exception) {
+        catch(Exception exception) {
             return false;
         }
         return true;
     }
 
-    private void handleGet(HttpExchange exchange) {
+    private void handleGet(HttpExchange exchange) throws SQLException {
         StringBuilder resultBuilder = new StringBuilder();
+        List<WarningMessage> messages = db.getAllMessages();
         if(!messages.isEmpty()) {
             JSONArray array = new JSONArray();
             for(WarningMessage message : messages) {

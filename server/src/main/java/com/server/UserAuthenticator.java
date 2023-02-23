@@ -1,37 +1,37 @@
 package com.server;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.SQLException;
 
 import com.sun.net.httpserver.*;
 
 public class UserAuthenticator extends BasicAuthenticator {
 
-    private static List<User> users = null;
+    private static MessageDB db;
 
     public UserAuthenticator() {
         super("warning");
-        users = new ArrayList<User>();
-        users.add(new User("matti", "salasana", "matti@matti.com"));
+        db = MessageDB.getInstance();
     }
 
     @Override
     public boolean checkCredentials(String username, String password) {
-        for(User findUser : users) {
-            if(findUser.getUsername().equals(username) && findUser.getPassword().equals(password))
-                return true;
+        try {
+            return db.validateUser(username, password);
+        }
+        catch(SQLException e) {
+            e.printStackTrace();
         }
         return false;
     }
 
     public boolean registerUser(User withUser) {
-        for(User checkUser : users) {
-            if(checkUser.getUsername().equals(withUser.getUsername())) {
-                return false;
-            }
+        try {
+            return db.addNewUser(withUser);
         }
-        users.add(withUser);
-        return true;
+        catch(SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
     
 }

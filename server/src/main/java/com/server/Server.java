@@ -27,7 +27,7 @@ public class Server {
                     parameters.setSSLParameters(sslParameters);
                 }
             });
-            MessageDB.open(args[2]);
+            MessageDB.open("msgdb.db");
         }
         catch(Exception exception) {
             exception.printStackTrace();

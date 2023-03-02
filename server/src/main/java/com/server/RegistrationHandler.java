@@ -10,38 +10,39 @@ import com.sun.net.httpserver.*;
 
 public class RegistrationHandler implements HttpHandler {
 
-    private static UserAuthenticator authenticator = null;
+    private UserAuthenticator authenticator = null;
+    private Utils utils = new Utils(); 
 
     public RegistrationHandler(UserAuthenticator authenticator) {
         super();
-        RegistrationHandler.authenticator = authenticator;
+        this.authenticator = authenticator;
     }
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
             if(exchange.getRequestMethod().equalsIgnoreCase("POST")) {
                 InputStream requestStream = exchange.getRequestBody();
-                String requestBody = Utils.read(requestStream);
+                String requestBody = utils.read(requestStream);
                 User addUser = null;
                 try {
                     addUser = User.fromJSON(new JSONObject(requestBody));
                     if(addUser.getUsername().equals("") || addUser.getPassword().equals("")
                         || addUser.getEmail().equals("")) {
-                            Utils.sendResponse("User credentials not valid", 400, exchange);
+                            utils.sendResponse("User credentials not valid", 400, exchange);
                     }
                     else {
                         if(authenticator.registerUser(addUser))
-                            Utils.sendResponse("User registered", 200, exchange);
+                            utils.sendResponse("User registered", 200, exchange);
                         else
-                            Utils.sendResponse("User already exists", 405, exchange);
+                            utils.sendResponse("User already exists", 405, exchange);
                     }
                 }
                 catch(JSONException exception) {
-                    Utils.sendResponse("Request body not valid JSON", 400, exchange);
+                    utils.sendResponse("Request body not valid JSON", 400, exchange);
                 }
             }
             else {
-                Utils.sendResponse("Not supported", 400, exchange);
+                utils.sendResponse("Not supported", 400, exchange);
             }
     }
 }

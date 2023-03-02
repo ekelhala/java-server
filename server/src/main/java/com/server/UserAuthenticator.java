@@ -6,7 +6,7 @@ import com.sun.net.httpserver.*;
 
 public class UserAuthenticator extends BasicAuthenticator {
 
-    private static MessageDB db;
+    private MessageDB db;
 
     public UserAuthenticator() {
         super("warning");

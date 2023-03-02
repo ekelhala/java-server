@@ -13,6 +13,7 @@ import com.sun.net.httpserver.*;
 public class MessageHandler implements HttpHandler{
     
     private MessageDB db;
+    private Utils utils = new Utils();
 
     public MessageHandler() {
         super();
@@ -31,11 +32,11 @@ public class MessageHandler implements HttpHandler{
                         exchange.sendResponseHeaders(200, -1);
                     }
                     else {
-                        Utils.sendResponse("Request body not valid JSON", 400, exchange);
+                        utils.sendResponse("Request body not valid JSON", 400, exchange);
                     }
                     break;
                 default:
-                    Utils.sendResponse("Not supported", 400, exchange);
+                    utils.sendResponse("Not supported", 400, exchange);
                     break;
             }
         }
@@ -51,7 +52,7 @@ public class MessageHandler implements HttpHandler{
      */
     private boolean handlePost(HttpExchange exchange) throws SQLException {
         InputStream postStream = exchange.getRequestBody();
-        String message = Utils.read(postStream);
+        String message = utils.read(postStream);
         try {
             WarningMessage addMessage = WarningMessage.fromJSON(new JSONObject(message));
             db.addNewMessage(addMessage);
@@ -72,7 +73,7 @@ public class MessageHandler implements HttpHandler{
             }
             resultBuilder.append(array.toString());
             try {
-                Utils.sendResponse(resultBuilder.toString(), 200, exchange, true);
+                utils.sendResponse(resultBuilder.toString(), 200, exchange, true);
             }
             catch(Exception e) {
                 e.printStackTrace();

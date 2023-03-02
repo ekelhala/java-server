@@ -3,3 +3,4 @@ keystore.jks
 .vscode
 message.json
 user.json
+msgdb.db

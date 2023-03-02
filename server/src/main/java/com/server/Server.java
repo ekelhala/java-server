@@ -3,6 +3,7 @@ package com.server;
 import java.io.FileInputStream;
 import java.net.InetSocketAddress;
 import java.security.KeyStore;
+import java.util.concurrent.Executors;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -36,7 +37,7 @@ public class Server {
         UserAuthenticator auth = new UserAuthenticator();
         server.createContext("/registration", new RegistrationHandler(auth));
         warningContext.setAuthenticator(auth);
-        server.setExecutor(null);
+        server.setExecutor(Executors.newCachedThreadPool());
         server.start();
     }
 

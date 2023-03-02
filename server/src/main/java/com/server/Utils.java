@@ -9,14 +9,14 @@ import java.util.stream.Collectors;
 
 import com.sun.net.httpserver.HttpExchange;
 
-public abstract class Utils {
+public class Utils {
 
     /**
      * 
      * @param input InputStream josta halutaan tekstiä lukea
      * @return String-objekti tai null jos lukuoperaatiota ei voitu suorittaa
      */
-    public static String read(InputStream input) {
+    public String read(InputStream input) {
         String result = null;
         try {
         InputStreamReader reader = new InputStreamReader(input);
@@ -36,7 +36,7 @@ public abstract class Utils {
      * @param withExchange Vastauksen kohde
      * @throws IOException Jos vastausstreamiin kirjoittaessa tapahtuu virhe
      */
-    public static void sendResponse(String responseText, int status, HttpExchange withExchange) throws IOException {
+    public void sendResponse(String responseText, int status, HttpExchange withExchange) throws IOException {
         byte[] responseMsg = responseText.getBytes("UTF-8");
         withExchange.sendResponseHeaders(status, responseMsg.length);
         OutputStream responseStream = withExchange.getResponseBody();
@@ -45,7 +45,7 @@ public abstract class Utils {
         responseStream.close();
     }
 
-    public static void sendResponse(String responseText, int status,
+    public void sendResponse(String responseText, int status,
                                     HttpExchange withExchange, boolean isJson) throws IOException {
         String contentType = null;
         if(isJson) {

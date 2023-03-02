@@ -31,8 +31,12 @@ public class WarningMessage {
     private double longitude;
     private DangerType dangerType;
     private LocalDateTime sent;
+    private String areaCode;
+    private String phoneNumber;
     
-    public WarningMessage(String nickname, double latitude, double longitude, DangerType dangerType, String sent) throws DateTimeParseException {
+    public WarningMessage(String nickname, double latitude,
+                        double longitude, DangerType dangerType, 
+                        String sent) throws DateTimeParseException {
         this.nickname = nickname;
         this.latitude = latitude;
         this.longitude = longitude;
@@ -40,11 +44,14 @@ public class WarningMessage {
         this.sent = LocalDateTime.ofInstant(Instant.parse(sent), ZoneId.of("UTC"));
     }
 
-    public WarningMessage(String nickname, double latitude, double longitude, DangerType dangerType) {
+    public WarningMessage(String nickname, double latitude, double longitude, DangerType dangerType,
+                            String areaCode, String phoneNumber) {
         this.nickname = nickname;
         this.latitude = latitude;
         this.longitude = longitude;
         this.dangerType = dangerType;
+        this.areaCode = areaCode;
+        this.phoneNumber = phoneNumber;
     }
 
     public String getNickname() {
@@ -63,6 +70,22 @@ public class WarningMessage {
         this.sent = sent;
     }
 
+    public void setAreaCode(String areaCode) {
+        this.areaCode = areaCode;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getAreaCode() {
+        return areaCode;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
     /**
      * Luo WarningMessagen JSON-objektista
      * @param object JSONObjekti, joka sisältää tarvitut tiedot
@@ -70,10 +93,24 @@ public class WarningMessage {
      * @throws JSONException Jos object ei sisällä kaikkia tarvittuja kenttiä
      */
     public static WarningMessage fromJSON(JSONObject object) throws JSONException, DateTimeParseException {
-        return new WarningMessage(object.getString("nickname"), object.getDouble("latitude"),
+        WarningMessage result = new WarningMessage(object.getString("nickname"), object.getDouble("latitude"),
                                     object.getDouble("longitude"), 
                                     verifyDangerType(object.getString("dangertype")),
                                     object.getString("sent"));
+        
+        if(object.has("areacode")) {
+            result.setAreaCode(object.getString("areacode"));
+        }
+        else {
+            result.setAreaCode("nodata");
+        }
+        if(object.has("phonenumber")) {
+            result.setPhoneNumber(object.getString("phonenumber"));
+        }
+        else {
+            result.setPhoneNumber("nodata");
+        }
+        return result;
     }
 
     /**
@@ -88,6 +125,10 @@ public class WarningMessage {
         result.put("latitude", latitude);
         result.put("dangertype", dangerType.label);
         result.put("sent", sentZoned.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX")));
+        if(!areaCode.equals("nodata"))
+            result.put("areacode", areaCode);
+        if(!phoneNumber.equals("nodata"))
+            result.put("phonenumber", phoneNumber);
         return result;
     }
 

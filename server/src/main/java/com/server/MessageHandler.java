@@ -57,36 +57,13 @@ public class MessageHandler implements HttpHandler{
             Utils.sendResponse("Request body not valid JSON", 400, exchange);
         }
         if(obj.has("query")) {
-            Query query = null;
-            try {
-                query = Query.fromJSON(new JSONObject(message));
-            }
-            catch(JSONException exception) {
-                Utils.sendResponse("Query parameter not valid", 400, exchange);
-            }
-            List<WarningMessage> queryResults = db.queryMessages(query);
-                JSONArray array = new JSONArray();
-                for(WarningMessage queryResult : queryResults) {
-                    array.put(queryResult.toJSON());
-                }
-                String queryResponse = array.toString();
-                Utils.sendResponse(queryResponse, 200, exchange);
+            handleQuery(exchange, message);
+        }
+        else if(obj.has("updatereason")) {
+            handleEdit(exchange, message);
         }
         else {
-            WarningMessage addMessage = null;
-            try {
-                addMessage = WarningMessage.fromJSON(new JSONObject(message));
-            }
-            catch(Exception exception) {
-                exception.printStackTrace();
-                Utils.sendResponse("Request body not valid JSON", 400, exchange);
-            }
-            db.addNewMessage(addMessage);
-            try {
-                exchange.sendResponseHeaders(200, -1);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            handleMessage(exchange, message);
         }
     }
 
@@ -113,6 +90,57 @@ public class MessageHandler implements HttpHandler{
             catch(IOException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    private void handleQuery(HttpExchange exchange, String httpMessage) throws SQLException {
+        Query query = null;
+        try {
+            query = Query.fromJSON(new JSONObject(httpMessage));
+        }
+        catch(JSONException exception) {
+            Utils.sendResponse("Query parameter not valid", 400, exchange);
+        }
+        List<WarningMessage> queryResults = db.queryMessages(query);
+            JSONArray array = new JSONArray();
+            for(WarningMessage queryResult : queryResults) {
+                array.put(queryResult.toJSON());
+            }
+            String queryResponse = array.toString();
+            Utils.sendResponse(queryResponse, 200, exchange);
+    }
+
+    private void handleMessage(HttpExchange exchange, String httpMessage) throws SQLException {
+        WarningMessage addMessage = null;
+        try {
+            addMessage = WarningMessage.fromJSON(new JSONObject(httpMessage));
+            addMessage.setByUser(exchange.getPrincipal().getUsername());
+        }
+        catch(Exception exception) {
+            Utils.sendResponse("Request body not valid JSON", 400, exchange);
+        }
+        db.addNewMessage(addMessage);
+        try {
+            exchange.sendResponseHeaders(200, -1);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void handleEdit(HttpExchange exchange, String httpMessage) throws SQLException {
+        WarningMessage editMessage = null;
+        try {
+            editMessage = WarningMessage.fromJSON(new JSONObject(httpMessage));
+            editMessage.setByUser(exchange.getPrincipal().getUsername());
+        }
+        catch(JSONException exception) {
+            Utils.sendResponse("Request body not valid JSON", 400, exchange);
+        }
+        db.editOrCreate(editMessage);
+        try {
+            exchange.sendResponseHeaders(200, -1);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

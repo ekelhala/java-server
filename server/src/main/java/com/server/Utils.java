@@ -61,18 +61,5 @@ public abstract class Utils {
         withExchange.getResponseHeaders().set("Content-Type", contentType);
         sendResponse(responseText, status, withExchange);
     }
-
-    public static boolean verifyQuery(WarningMessage message) {
-        switch(message.getQuery()) {
-            case "location":
-                return true;
-            case "user":
-                return true;
-            case "time":
-                return true;
-            default:
-                return false;
-        }
-    }
     
 }

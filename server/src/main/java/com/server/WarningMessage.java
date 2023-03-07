@@ -33,7 +33,10 @@ public class WarningMessage {
     private LocalDateTime sent;
     private String areaCode;
     private String phoneNumber;
-    private String query;
+    private String byUser;
+    private LocalDateTime modified;
+    private String updateReason;
+    private int id;
     
     public WarningMessage(String nickname, double latitude,
                         double longitude, DangerType dangerType, 
@@ -87,12 +90,36 @@ public class WarningMessage {
         return phoneNumber;
     }
 
-    public void setQuery(String query) {
-        this.query = query;
+    public String getByUser() {
+        return byUser;
     }
 
-    public String getQuery() {
-        return query;
+    public void setByUser(String byUser) {
+        this.byUser = byUser;
+    }
+
+    public LocalDateTime getModified() {
+        return modified;
+    }
+
+    public void setModified(LocalDateTime modified) {
+        this.modified = modified;
+    }
+
+    public String getUpdateReason() {
+        return updateReason;
+    }
+
+    public void setUpdateReason(String updateReason) {
+        this.updateReason = updateReason;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     /**
@@ -106,9 +133,8 @@ public class WarningMessage {
                                     object.getDouble("longitude"), 
                                     verifyDangerType(object.getString("dangertype")),
                                     object.getString("sent"));
-        
         handlePhoneContact(object, result);
-        handleQuery(object, result);
+        setIdIfExists(object, result);
         return result;
     }
 
@@ -123,13 +149,12 @@ public class WarningMessage {
             message.setPhoneNumber("nodata");
     }
 
-    private static void handleQuery(JSONObject object, WarningMessage message) {
-        if(object.has("query")) {
-            String queryString = object.getString("query");
-            message.setQuery(queryString);
+    private static void setIdIfExists(JSONObject object, WarningMessage message) {
+        if(object.has("id")) {
+            message.setId(object.getInt("id"));
+            message.setUpdateReason(object.getString("updatereason"));
+            message.setModified(LocalDateTime.now());
         }
-        else
-            message.setQuery("");
     }
 
     /**
@@ -144,15 +169,25 @@ public class WarningMessage {
         result.put("latitude", latitude);
         result.put("dangertype", dangerType.label);
         result.put("sent", sentZoned.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX")));
+        result.put("id", id);
         if(!areaCode.equals("nodata"))
             result.put("areacode", areaCode);
         if(!phoneNumber.equals("nodata"))
             result.put("phonenumber", phoneNumber);
+        if(modified != null) {
+            ZonedDateTime modifiedZoned = ZonedDateTime.of(modified, ZoneId.of("UTC"));
+            result.put("modified", modifiedZoned.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX")));
+            result.put("updatereason", updateReason);
+        }
         return result;
     }
 
     public long sentAsMillis() {
         return sent.toInstant(ZoneOffset.UTC).toEpochMilli();
+    }
+
+    public long modifiedAsMillis() {
+        return modified.toInstant(ZoneOffset.UTC).toEpochMilli();
     }
 
     //Apumetodi, jolla varmistetaan että DangerType on oikeanlainen

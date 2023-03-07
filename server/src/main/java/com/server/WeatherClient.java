@@ -27,7 +27,7 @@ import org.w3c.dom.NodeList;
 
 public abstract class WeatherClient {
 
-    private static String serverAddress = "http://localhost:4001///weather";
+    private static String serverAddress = "http://localhost:4001/weather";
     private static URL requestURL;
 
     public static void initialize() throws MalformedURLException {

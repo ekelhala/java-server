@@ -35,7 +35,7 @@ public class MessageDB {
                 validateUserStatement = connection.prepareStatement("select * from users where USERNAME=?");
                 addNewUserStatement = connection.prepareStatement("insert into users(USERNAME, PASSWORD, EMAIL) values(?, ?, ?)");
                 checkUserStatement = connection.prepareStatement("select 1 from users where USERNAME=?");
-                addNewMessageStatement = connection.prepareStatement("insert into messages(NICKNAME, DANGERTYPE, LATITUDE, LONGITUDE, SENT, AREACODE, PHONENUMBER, BYUSER, MODIFIED, UPDATEREASON) values(?,?,?,?,?,?,?,?,?,?)");
+                addNewMessageStatement = connection.prepareStatement("insert into messages(NICKNAME, DANGERTYPE, LATITUDE, LONGITUDE, SENT, AREACODE, PHONENUMBER, BYUSER, MODIFIED, UPDATEREASON, TEMPERATURE) values(?,?,?,?,?,?,?,?,?,?,?)");
                 getAllMessagesStatement = connection.prepareStatement("select * from messages");
                 queryUserStatement = connection.prepareStatement("select * from messages where NICKNAME=?");
                 queryTimeStatement = connection.prepareStatement("select * from messages where SENT > ? and SENT < ?");
@@ -120,6 +120,7 @@ public class MessageDB {
             addNewMessageStatement.setString(8, message.getByUser());
             addNewMessageStatement.setLong(9, 0);
             addNewMessageStatement.setString(10, "");
+            addNewMessageStatement.setString(11, message.getTemperature());
             addNewMessageStatement.executeUpdate();
             return true;
         }
@@ -177,7 +178,7 @@ public class MessageDB {
     private static void init() throws SQLException {
         if(connection != null) {
             String createUserTable = "create table users(USERNAME VARCHAR(60), PASSWORD VARCHAR(60), EMAIL VARCHAR(60)) ";
-            String createMsgTable = "create table messages(ID INTEGER PRIMARY KEY, NICKNAME VARCHAR(60), DANGERTYPE VARCHAR(10), LONGITUDE DOUBLE, LATITUDE DOUBLE, SENT INTEGER, AREACODE VARCHAR(10), PHONENUMBER VARCHAR(10), BYUSER VARCHAR(60), MODIFIED INTEGER, UPDATEREASON VARCHAR(60))";
+            String createMsgTable = "create table messages(ID INTEGER PRIMARY KEY, NICKNAME VARCHAR(60), DANGERTYPE VARCHAR(10), LONGITUDE DOUBLE, LATITUDE DOUBLE, SENT INTEGER, AREACODE VARCHAR(10), PHONENUMBER VARCHAR(10), BYUSER VARCHAR(60), MODIFIED INTEGER, UPDATEREASON VARCHAR(60), TEMPERATURE VARCHAR(10))";
             Statement createStatement = connection.createStatement();
             createStatement.executeUpdate(createUserTable);
             createStatement.executeUpdate(createMsgTable);
@@ -196,6 +197,7 @@ public class MessageDB {
             String phoneNumber = set.getString("PHONENUMBER");
             long modified = set.getLong("MODIFIED");
             int id = set.getInt("ID");
+            String temperature = set.getString("TEMPERATURE");
             WarningMessage msg = new WarningMessage(nickname, latitude, longitude, dangerType, areaCode, phoneNumber);
             msg.setSent(ZonedDateTime.ofInstant(Instant.ofEpochMilli(set.getLong("SENT")), ZoneOffset.UTC));
             if(modified != 0) {
@@ -204,6 +206,7 @@ public class MessageDB {
                 msg.setUpdateReason(updateReason);
             }
             msg.setId(id);
+            msg.setTemperature(temperature);
             results.add(msg);
         }
         return results;

@@ -33,6 +33,7 @@ public class WarningMessage {
     private ZonedDateTime modified;
     private String updateReason;
     private int id;
+    private String temperature = "";
     
     public WarningMessage(String nickname, double latitude,
                         double longitude, DangerType dangerType, 
@@ -118,6 +119,14 @@ public class WarningMessage {
         this.id = id;
     }
 
+    public String getTemperature() {
+        return temperature;
+    }
+
+    public void setTemperature(String temperature) {
+        this.temperature = temperature;
+    }
+
     /**
      * Luo WarningMessagen JSON-objektista
      * @param object JSONObjekti, joka sisältää tarvitut tiedot
@@ -173,6 +182,8 @@ public class WarningMessage {
             result.put("modified", modified.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX")));
             result.put("updatereason", updateReason);
         }
+        if(!temperature.equals(""))
+            result.put("weather", temperature);
         return result;
     }
 

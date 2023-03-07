@@ -58,7 +58,7 @@ public class MessageHandler implements HttpHandler{
                 handleEdit(exchange, message);
             }
             else {
-                handleMessage(exchange, message);
+                handleMessage(exchange, message, obj.has("weather"));
             }
         }
         catch(JSONException exception) {
@@ -110,11 +110,14 @@ public class MessageHandler implements HttpHandler{
             Utils.sendResponse(queryResponse, 200, exchange);
     }
 
-    private void handleMessage(HttpExchange exchange, String httpMessage) throws SQLException {
+    private void handleMessage(HttpExchange exchange, String httpMessage, boolean fetchWeatherData) throws SQLException {
         WarningMessage addMessage = null;
         try {
             addMessage = WarningMessage.fromJSON(new JSONObject(httpMessage));
             addMessage.setByUser(exchange.getPrincipal().getUsername());
+            if(fetchWeatherData) {
+                addMessage.setTemperature(WeatherClient.getTemperature(addMessage.getCoordinates()));
+            }
             db.addNewMessage(addMessage);
             exchange.sendResponseHeaders(200, -1);
         }

@@ -33,6 +33,7 @@ public class WarningMessage {
     private LocalDateTime sent;
     private String areaCode;
     private String phoneNumber;
+    private String query;
     
     public WarningMessage(String nickname, double latitude,
                         double longitude, DangerType dangerType, 
@@ -86,6 +87,14 @@ public class WarningMessage {
         return phoneNumber;
     }
 
+    public void setQuery(String query) {
+        this.query = query;
+    }
+
+    public String getQuery() {
+        return query;
+    }
+
     /**
      * Luo WarningMessagen JSON-objektista
      * @param object JSONObjekti, joka sisältää tarvitut tiedot
@@ -98,19 +107,29 @@ public class WarningMessage {
                                     verifyDangerType(object.getString("dangertype")),
                                     object.getString("sent"));
         
-        if(object.has("areacode")) {
-            result.setAreaCode(object.getString("areacode"));
-        }
-        else {
-            result.setAreaCode("nodata");
-        }
-        if(object.has("phonenumber")) {
-            result.setPhoneNumber(object.getString("phonenumber"));
-        }
-        else {
-            result.setPhoneNumber("nodata");
-        }
+        handlePhoneContact(object, result);
+        handleQuery(object, result);
         return result;
+    }
+
+    private static void handlePhoneContact(JSONObject object, WarningMessage message) {
+        if(object.has("areacode"))
+            message.setAreaCode(object.getString("areacode"));
+        else
+            message.setAreaCode("nodata");
+        if(object.has("phonenumber"))
+            message.setPhoneNumber(object.getString("phonenumber"));
+        else 
+            message.setPhoneNumber("nodata");
+    }
+
+    private static void handleQuery(JSONObject object, WarningMessage message) {
+        if(object.has("query")) {
+            String queryString = object.getString("query");
+            message.setQuery(queryString);
+        }
+        else
+            message.setQuery("");
     }
 
     /**

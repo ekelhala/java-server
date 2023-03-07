@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.sun.net.httpserver.*;
@@ -13,7 +14,6 @@ import com.sun.net.httpserver.*;
 public class MessageHandler implements HttpHandler{
     
     private MessageDB db;
-    private Utils utils = new Utils();
 
     public MessageHandler() {
         super();
@@ -28,15 +28,10 @@ public class MessageHandler implements HttpHandler{
                     handleGet(exchange);
                     break;
                 case "POST":
-                    if(handlePost(exchange)) {
-                        exchange.sendResponseHeaders(200, -1);
-                    }
-                    else {
-                        utils.sendResponse("Request body not valid JSON", 400, exchange);
-                    }
+                    handlePost(exchange);
                     break;
                 default:
-                    utils.sendResponse("Not supported", 400, exchange);
+                    Utils.sendResponse("Not supported", 400, exchange);
                     break;
             }
         }
@@ -50,17 +45,49 @@ public class MessageHandler implements HttpHandler{
      * @param exchange HttpExchange jossa on haluttu viesti.
      * @return Totuusarvo, joka kertoo onnistuiko viestin lisäys serverille.
      */
-    private boolean handlePost(HttpExchange exchange) throws SQLException {
+    private void handlePost(HttpExchange exchange) throws SQLException {
         InputStream postStream = exchange.getRequestBody();
-        String message = utils.read(postStream);
+        String message = Utils.read(postStream);
+        JSONObject obj = null;
         try {
-            WarningMessage addMessage = WarningMessage.fromJSON(new JSONObject(message));
+            obj = new JSONObject(message);
+        }
+        catch(JSONException exception) {
+            exception.printStackTrace();
+            Utils.sendResponse("Request body not valid JSON", 400, exchange);
+        }
+        if(obj.has("query")) {
+            Query query = null;
+            try {
+                query = Query.fromJSON(new JSONObject(message));
+            }
+            catch(JSONException exception) {
+                Utils.sendResponse("Query parameter not valid", 400, exchange);
+            }
+            List<WarningMessage> queryResults = db.queryMessages(query);
+                JSONArray array = new JSONArray();
+                for(WarningMessage queryResult : queryResults) {
+                    array.put(queryResult.toJSON());
+                }
+                String queryResponse = array.toString();
+                Utils.sendResponse(queryResponse, 200, exchange);
+        }
+        else {
+            WarningMessage addMessage = null;
+            try {
+                addMessage = WarningMessage.fromJSON(new JSONObject(message));
+            }
+            catch(Exception exception) {
+                exception.printStackTrace();
+                Utils.sendResponse("Request body not valid JSON", 400, exchange);
+            }
             db.addNewMessage(addMessage);
+            try {
+                exchange.sendResponseHeaders(200, -1);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-        catch(Exception exception) {
-            return false;
-        }
-        return true;
     }
 
     private void handleGet(HttpExchange exchange) throws SQLException {
@@ -73,7 +100,7 @@ public class MessageHandler implements HttpHandler{
             }
             resultBuilder.append(array.toString());
             try {
-                utils.sendResponse(resultBuilder.toString(), 200, exchange, true);
+                Utils.sendResponse(resultBuilder.toString(), 200, exchange, true);
             }
             catch(Exception e) {
                 e.printStackTrace();

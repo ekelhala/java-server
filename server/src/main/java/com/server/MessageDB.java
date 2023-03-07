@@ -21,8 +21,11 @@ public class MessageDB {
     private PreparedStatement addNewUserStatement,
                             checkUserStatement,
                             addNewMessageStatement,
-                            getAllMessagesStatement;
-    private PreparedStatement validateUserStatement;
+                            getAllMessagesStatement,
+                            validateUserStatement,
+                            queryTimeStatement,
+                            queryUserStatement,
+                            queryLocationStatement;
     private SecureRandom saltGenerator = new SecureRandom();
 
     private MessageDB() {
@@ -32,6 +35,9 @@ public class MessageDB {
                 checkUserStatement = connection.prepareStatement("select 1 from users where USERNAME=?");
                 addNewMessageStatement = connection.prepareStatement("insert into messages(NICKNAME, DANGERTYPE, LATITUDE, LONGITUDE, SENT, AREACODE, PHONENUMBER) values(?,?,?,?,?,?,?)");
                 getAllMessagesStatement = connection.prepareStatement("select * from messages");
+                queryUserStatement = connection.prepareStatement("select * from messages where NICKNAME=?");
+                queryTimeStatement = connection.prepareStatement("select * from messages where SENT > ? and SENT < ?");
+                queryLocationStatement = connection.prepareStatement("select * from messages where LONGITUDE < ? and LONGITUDE > ? and LATITUDE > ? and LATITUDE < ?");
             }
             catch(SQLException e) {
                 e.printStackTrace();
@@ -114,20 +120,32 @@ public class MessageDB {
     }
 
     public List<WarningMessage> getAllMessages() throws SQLException {
-        List<WarningMessage> results = new ArrayList<>();
-        ResultSet messageSet = getAllMessagesStatement.executeQuery();
-        while(messageSet.next()) {
-            String nickname = messageSet.getString("NICKNAME");
-            DangerType dangerType = WarningMessage.verifyDangerType(messageSet.getString("DANGERTYPE"));
-            double longitude = messageSet.getDouble("LONGITUDE");
-            double latitude = messageSet.getDouble("LATITUDE");
-            String areaCode = messageSet.getString("AREACODE");
-            String phoneNumber = messageSet.getString("PHONENUMBER");
-            WarningMessage msg = new WarningMessage(nickname, latitude, longitude, dangerType, areaCode, phoneNumber);
-            msg.setSent(LocalDateTime.ofInstant(Instant.ofEpochMilli(messageSet.getLong("SENT")), ZoneOffset.UTC));
-            results.add(msg);
+        ResultSet result = getAllMessagesStatement.executeQuery();
+        return extractMessages(result);
+    }
+
+    public List<WarningMessage> queryMessages(Query query) throws SQLException {
+        PreparedStatement queryStatement = null;
+        switch(query.getType()) {
+            case "user":
+                queryStatement = queryUserStatement;
+                queryStatement.setString(1,query.getUser());
+                break;
+            case "time":
+                queryStatement = queryTimeStatement;
+                queryStatement.setLong(1, query.timeStartMillis());
+                queryStatement.setLong(2, query.timeEndMillis());
+                break;
+            case "location":
+                queryStatement = queryLocationStatement;
+                queryStatement.setDouble(1, query.getDownLongitude());
+                queryStatement.setDouble(2, query.getUpLongitude());
+                queryStatement.setDouble(3, query.getDownLatitude());
+                queryStatement.setDouble(4, query.getUpLatitude());
+                break;
         }
-        return results;
+        ResultSet set = queryStatement.executeQuery();
+        return extractMessages(set);
     }
 
     private static void init() throws SQLException {
@@ -141,4 +159,19 @@ public class MessageDB {
         }
     }
     
+    private List<WarningMessage> extractMessages(ResultSet set) throws SQLException {
+        List<WarningMessage> results = new ArrayList<>();
+        while(set.next()) {
+            String nickname = set.getString("NICKNAME");
+            DangerType dangerType = WarningMessage.verifyDangerType(set.getString("DANGERTYPE"));
+            double longitude = set.getDouble("LONGITUDE");
+            double latitude = set.getDouble("LATITUDE");
+            String areaCode = set.getString("AREACODE");
+            String phoneNumber = set.getString("PHONENUMBER");
+            WarningMessage msg = new WarningMessage(nickname, latitude, longitude, dangerType, areaCode, phoneNumber);
+            msg.setSent(LocalDateTime.ofInstant(Instant.ofEpochMilli(set.getLong("SENT")), ZoneOffset.UTC));
+            results.add(msg);
+        }
+        return results;
+    }
 }

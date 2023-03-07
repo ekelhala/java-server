@@ -9,14 +9,14 @@ import java.util.stream.Collectors;
 
 import com.sun.net.httpserver.HttpExchange;
 
-public class Utils {
+public abstract class Utils {
 
     /**
      * 
      * @param input InputStream josta halutaan tekstiä lukea
      * @return String-objekti tai null jos lukuoperaatiota ei voitu suorittaa
      */
-    public String read(InputStream input) {
+    public static String read(InputStream input) {
         String result = null;
         try {
         InputStreamReader reader = new InputStreamReader(input);
@@ -36,16 +36,20 @@ public class Utils {
      * @param withExchange Vastauksen kohde
      * @throws IOException Jos vastausstreamiin kirjoittaessa tapahtuu virhe
      */
-    public void sendResponse(String responseText, int status, HttpExchange withExchange) throws IOException {
-        byte[] responseMsg = responseText.getBytes("UTF-8");
-        withExchange.sendResponseHeaders(status, responseMsg.length);
-        OutputStream responseStream = withExchange.getResponseBody();
-        responseStream.write(responseMsg);
-        responseStream.flush();
-        responseStream.close();
+    public static void sendResponse(String responseText, int status, HttpExchange withExchange) {
+        try {
+            byte[] responseMsg = responseText.getBytes("UTF-8");
+            withExchange.sendResponseHeaders(status, responseMsg.length);
+            OutputStream responseStream = withExchange.getResponseBody();
+            responseStream.write(responseMsg);
+            responseStream.flush();
+            responseStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    public void sendResponse(String responseText, int status,
+    public static void sendResponse(String responseText, int status,
                                     HttpExchange withExchange, boolean isJson) throws IOException {
         String contentType = null;
         if(isJson) {
@@ -56,6 +60,19 @@ public class Utils {
         }
         withExchange.getResponseHeaders().set("Content-Type", contentType);
         sendResponse(responseText, status, withExchange);
+    }
+
+    public static boolean verifyQuery(WarningMessage message) {
+        switch(message.getQuery()) {
+            case "location":
+                return true;
+            case "user":
+                return true;
+            case "time":
+                return true;
+            default:
+                return false;
+        }
     }
     
 }

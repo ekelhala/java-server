@@ -4,8 +4,8 @@ import java.io.File;
 import java.security.SecureRandom;
 import java.sql.*;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -197,10 +197,10 @@ public class MessageDB {
             long modified = set.getLong("MODIFIED");
             int id = set.getInt("ID");
             WarningMessage msg = new WarningMessage(nickname, latitude, longitude, dangerType, areaCode, phoneNumber);
-            msg.setSent(LocalDateTime.ofInstant(Instant.ofEpochMilli(set.getLong("SENT")), ZoneOffset.UTC));
+            msg.setSent(ZonedDateTime.ofInstant(Instant.ofEpochMilli(set.getLong("SENT")), ZoneOffset.UTC));
             if(modified != 0) {
                 String updateReason = set.getString("UPDATEREASON");
-                msg.setModified(LocalDateTime.ofInstant(Instant.ofEpochMilli(modified), ZoneOffset.UTC));
+                msg.setModified(ZonedDateTime.ofInstant(Instant.ofEpochMilli(modified), ZoneOffset.UTC));
                 msg.setUpdateReason(updateReason);
             }
             msg.setId(id);

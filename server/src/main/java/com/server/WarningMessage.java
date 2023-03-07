@@ -1,9 +1,5 @@
 package com.server;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -30,11 +26,11 @@ public class WarningMessage {
     private double latitude;
     private double longitude;
     private DangerType dangerType;
-    private LocalDateTime sent;
+    private ZonedDateTime sent;
     private String areaCode;
     private String phoneNumber;
     private String byUser;
-    private LocalDateTime modified;
+    private ZonedDateTime modified;
     private String updateReason;
     private int id;
     
@@ -45,7 +41,7 @@ public class WarningMessage {
         this.latitude = latitude;
         this.longitude = longitude;
         this.dangerType = dangerType;
-        this.sent = LocalDateTime.ofInstant(Instant.parse(sent), ZoneId.of("UTC"));
+        this.sent = ZonedDateTime.parse(sent, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX"));
     }
 
     public WarningMessage(String nickname, double latitude, double longitude, DangerType dangerType,
@@ -70,7 +66,7 @@ public class WarningMessage {
         return dangerType;
     }
 
-    public void setSent(LocalDateTime sent) {
+    public void setSent(ZonedDateTime sent) {
         this.sent = sent;
     }
 
@@ -98,11 +94,11 @@ public class WarningMessage {
         this.byUser = byUser;
     }
 
-    public LocalDateTime getModified() {
+    public ZonedDateTime getModified() {
         return modified;
     }
 
-    public void setModified(LocalDateTime modified) {
+    public void setModified(ZonedDateTime modified) {
         this.modified = modified;
     }
 
@@ -153,7 +149,7 @@ public class WarningMessage {
         if(object.has("id")) {
             message.setId(object.getInt("id"));
             message.setUpdateReason(object.getString("updatereason"));
-            message.setModified(LocalDateTime.now());
+            message.setModified(ZonedDateTime.now());
         }
     }
 
@@ -163,31 +159,29 @@ public class WarningMessage {
      */
     public JSONObject toJSON() {
         JSONObject result = new JSONObject();
-        ZonedDateTime sentZoned = ZonedDateTime.of(sent, ZoneId.of("UTC"));
         result.put("nickname", nickname);
         result.put("longitude", longitude);
         result.put("latitude", latitude);
         result.put("dangertype", dangerType.label);
-        result.put("sent", sentZoned.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX")));
+        result.put("sent", sent.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX")));
         result.put("id", id);
         if(!areaCode.equals("nodata"))
             result.put("areacode", areaCode);
         if(!phoneNumber.equals("nodata"))
             result.put("phonenumber", phoneNumber);
         if(modified != null) {
-            ZonedDateTime modifiedZoned = ZonedDateTime.of(modified, ZoneId.of("UTC"));
-            result.put("modified", modifiedZoned.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX")));
+            result.put("modified", modified.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX")));
             result.put("updatereason", updateReason);
         }
         return result;
     }
 
     public long sentAsMillis() {
-        return sent.toInstant(ZoneOffset.UTC).toEpochMilli();
+        return sent.toInstant().toEpochMilli();
     }
 
     public long modifiedAsMillis() {
-        return modified.toInstant(ZoneOffset.UTC).toEpochMilli();
+        return modified.toInstant().toEpochMilli();
     }
 
     //Apumetodi, jolla varmistetaan että DangerType on oikeanlainen

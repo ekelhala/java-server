@@ -51,19 +51,19 @@ public class MessageHandler implements HttpHandler{
         JSONObject obj = null;
         try {
             obj = new JSONObject(message);
+            if(obj.has("query")) {
+                handleQuery(exchange, message);
+            }
+            else if(obj.has("updatereason")) {
+                handleEdit(exchange, message);
+            }
+            else {
+                handleMessage(exchange, message);
+            }
         }
         catch(JSONException exception) {
             exception.printStackTrace();
             Utils.sendResponse("Request body not valid JSON", 400, exchange);
-        }
-        if(obj.has("query")) {
-            handleQuery(exchange, message);
-        }
-        else if(obj.has("updatereason")) {
-            handleEdit(exchange, message);
-        }
-        else {
-            handleMessage(exchange, message);
         }
     }
 
@@ -115,15 +115,11 @@ public class MessageHandler implements HttpHandler{
         try {
             addMessage = WarningMessage.fromJSON(new JSONObject(httpMessage));
             addMessage.setByUser(exchange.getPrincipal().getUsername());
+            db.addNewMessage(addMessage);
+            exchange.sendResponseHeaders(200, -1);
         }
         catch(Exception exception) {
             Utils.sendResponse("Request body not valid JSON", 400, exchange);
-        }
-        db.addNewMessage(addMessage);
-        try {
-            exchange.sendResponseHeaders(200, -1);
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
@@ -133,7 +129,7 @@ public class MessageHandler implements HttpHandler{
             editMessage = WarningMessage.fromJSON(new JSONObject(httpMessage));
             editMessage.setByUser(exchange.getPrincipal().getUsername());
         }
-        catch(JSONException exception) {
+        catch(Exception exception) {
             Utils.sendResponse("Request body not valid JSON", 400, exchange);
         }
         db.editOrCreate(editMessage);

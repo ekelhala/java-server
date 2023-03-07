@@ -19,9 +19,9 @@ public abstract class Utils {
     public static String read(InputStream input) {
         String result = null;
         try {
-        InputStreamReader reader = new InputStreamReader(input);
-        result = new BufferedReader(reader).lines().collect(Collectors.joining("\n"));
-         reader.close();
+            InputStreamReader reader = new InputStreamReader(input);
+            result = new BufferedReader(reader).lines().collect(Collectors.joining("\n"));
+            reader.close();
         }
         catch(IOException exception) {
             exception.printStackTrace();

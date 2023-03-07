@@ -67,7 +67,6 @@ public abstract class WeatherClient {
             OutputStream contentOutput = connection.getOutputStream();
             contentOutput.write(requestContent);
             contentOutput.flush();
-            contentOutput.close();
             if(connection.getResponseCode() == 200) {
                 InputStream responseStream = connection.getInputStream();
                 String line = "";

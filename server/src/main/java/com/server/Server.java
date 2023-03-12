@@ -29,7 +29,7 @@ public class Server {
                 }
             });
             MessageDB.open("msgdb.db");
-            WeatherClient.initialize(args[0]);
+            WeatherClient.initialize(args[0], args[1]);
         }
         catch(Exception exception) {
             exception.printStackTrace();

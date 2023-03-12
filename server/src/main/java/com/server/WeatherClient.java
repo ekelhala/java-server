@@ -15,6 +15,7 @@ import java.security.KeyStore;
 import java.security.cert.Certificate;
 
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import javax.xml.parsers.DocumentBuilder;
@@ -95,6 +96,7 @@ public abstract class WeatherClient {
 
     private static HttpsURLConnection prepareRequest(int contentLength) {
         try {
+            /*
             KeyStore ks = KeyStore.getInstance("JKS");
             ks.load(new FileInputStream(cert), certPass.toCharArray());
             Certificate certificate = ks.getCertificate("alias");
@@ -104,9 +106,9 @@ public abstract class WeatherClient {
             TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("SunX509");
             trustManagerFactory.init(keyStore);
             SSLContext sslContext = SSLContext.getInstance("TLS");
-            sslContext.init(null, trustManagerFactory.getTrustManagers(), null);
+            sslContext.init(null, trustManagerFactory.getTrustManagers(), null);*/
             HttpsURLConnection request = (HttpsURLConnection) requestURL.openConnection();
-            request.setSSLSocketFactory(sslContext.getSocketFactory());
+            request.setSSLSocketFactory(initializeCertSSLContext().getSocketFactory());
             request.setRequestMethod("POST");
             request.setRequestProperty("Content-Type", "application/xml");
             request.setRequestProperty("Content-Length", String.valueOf(contentLength));
@@ -118,6 +120,23 @@ public abstract class WeatherClient {
             exception.printStackTrace();
             return null;
         }
+    }
+
+    private static SSLContext initializeCertSSLContext() {
+        try {
+            KeyStore keyStore = KeyStore.getInstance("JKS");
+            keyStore.load(new FileInputStream(cert), certPass.toCharArray());
+            KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+            kmf.init(keyStore, certPass.toCharArray());
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(kmf.getKeyManagers(), null, null);
+            return sslContext;
+        }
+        catch(Exception exception) {
+            exception.printStackTrace();
+            return null;
+        }
+
     }
 
     private static String buildRequestContent(Document requestBody) {

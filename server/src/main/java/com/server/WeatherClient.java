@@ -2,7 +2,6 @@ package com.server;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,7 +33,7 @@ import org.w3c.dom.NodeList;
 
 public abstract class WeatherClient {
 
-    private static String serverAddress = "http://localhost:4001/weather";
+    private static String serverAddress = "https://localhost:4001/weather";
     private static URL requestURL;
 
     public static void initialize() throws MalformedURLException {
@@ -94,12 +93,11 @@ public abstract class WeatherClient {
 
     private static HttpsURLConnection prepareRequest(int contentLength) {
         try {
-            File crtFile = new File("server.crt");
-            Certificate certificate = CertificateFactory.getInstance("X.509").generateCertificate(new FileInputStream(crtFile));
+            Certificate certificate = CertificateFactory.getInstance("X.509").generateCertificate(new FileInputStream("localhost.crt"));
             KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
             keyStore.load(null, null);
-            keyStore.setCertificateEntry("server", certificate);
-            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            keyStore.setCertificateEntry("localhost", certificate);
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("SunX509");
             trustManagerFactory.init(keyStore);
             SSLContext sslContext = SSLContext.getInstance("TLS");
             sslContext.init(null, trustManagerFactory.getTrustManagers(), null);

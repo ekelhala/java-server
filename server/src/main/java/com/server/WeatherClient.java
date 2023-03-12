@@ -35,9 +35,11 @@ public abstract class WeatherClient {
 
     private static String serverAddress = "https://localhost:4001/weather";
     private static URL requestURL;
+    private static String cert;
 
-    public static void initialize() throws MalformedURLException {
+    public static void initialize(String cert) throws MalformedURLException {
         requestURL = new URL(serverAddress);
+        WeatherClient.cert = cert;
     }
 
     public static String getTemperature(double[] coordinates) {
@@ -93,7 +95,7 @@ public abstract class WeatherClient {
 
     private static HttpsURLConnection prepareRequest(int contentLength) {
         try {
-            Certificate certificate = CertificateFactory.getInstance("X.509").generateCertificate(new FileInputStream("localhost.crt"));
+            Certificate certificate = CertificateFactory.getInstance("X.509").generateCertificate(new FileInputStream(cert));
             KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
             keyStore.load(null, null);
             keyStore.setCertificateEntry("localhost", certificate);

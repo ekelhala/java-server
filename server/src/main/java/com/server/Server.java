@@ -11,7 +11,6 @@ import javax.net.ssl.SSLParameters;
 import javax.net.ssl.TrustManagerFactory;
 
 import com.sun.net.httpserver.*;
-import com.sun.net.httpserver.HttpsParameters;
 
 public class Server {
 
@@ -25,7 +24,7 @@ public class Server {
                 public void configure(HttpsParameters parameters) {
                     SSLContext context = getSSLContext();
                     SSLParameters sslParameters = context.getDefaultSSLParameters();
-                    parameters.setSSLParameters(sslParameters);
+                    //parameters.setSSLParameters(sslParameters);
                 }
             });
             MessageDB.open("msgdb.db");

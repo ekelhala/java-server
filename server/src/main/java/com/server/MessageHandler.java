@@ -9,6 +9,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.server.Query.InvalidQueryTypeException;
+import com.server.WarningMessage.InvalidDangerTypeException;
 import com.sun.net.httpserver.*;
 
 public class MessageHandler implements HttpHandler{
@@ -37,6 +39,7 @@ public class MessageHandler implements HttpHandler{
         }
         catch(Exception exception) {
             exception.printStackTrace();
+            Utils.sendResponse("Database error", 500, exchange);
         }
     }
 
@@ -45,12 +48,11 @@ public class MessageHandler implements HttpHandler{
      * @param exchange HttpExchange jossa on haluttu viesti.
      * @return Totuusarvo, joka kertoo onnistuiko viestin lisäys serverille.
      */
-    private void handlePost(HttpExchange exchange) throws SQLException {
+    private void handlePost(HttpExchange exchange) throws SQLException, InvalidDangerTypeException {
         InputStream postStream = exchange.getRequestBody();
         String message = Utils.read(postStream);
-        JSONObject obj = null;
         try {
-            obj = new JSONObject(message);
+            JSONObject obj = new JSONObject(message);
             if(obj.has("query")) {
                 handleQuery(exchange, message);
             }
@@ -67,7 +69,7 @@ public class MessageHandler implements HttpHandler{
         }
     }
 
-    private void handleGet(HttpExchange exchange) throws SQLException {
+    private void handleGet(HttpExchange exchange) throws SQLException, InvalidDangerTypeException {
         StringBuilder resultBuilder = new StringBuilder();
         List<WarningMessage> messages = db.getAllMessages();
         if(!messages.isEmpty()) {
@@ -93,13 +95,16 @@ public class MessageHandler implements HttpHandler{
         }
     }
 
-    private void handleQuery(HttpExchange exchange, String httpMessage) throws SQLException {
-        Query query = null;
+    private void handleQuery(HttpExchange exchange, String httpMessage) throws SQLException, InvalidDangerTypeException {
+        Query query = new Query();
         try {
             query = Query.fromJSON(new JSONObject(httpMessage));
         }
-        catch(JSONException exception) {
-            Utils.sendResponse("Query parameter not valid", 400, exchange);
+        catch(Exception exception) {
+            if(exception instanceof InvalidQueryTypeException)
+                Utils.sendResponse(exception.getMessage(), 400, exchange);
+            else
+                Utils.sendResponse("JSON not valid", 400, exchange);
         }
         List<WarningMessage> queryResults = db.queryMessages(query);
             JSONArray array = new JSONArray();
@@ -122,7 +127,10 @@ public class MessageHandler implements HttpHandler{
             exchange.sendResponseHeaders(200, -1);
         }
         catch(Exception exception) {
-            Utils.sendResponse("Request body not valid JSON", 400, exchange);
+            if(exception instanceof InvalidDangerTypeException)
+                Utils.sendResponse(exception.getMessage(), 400, exchange);
+            else
+                Utils.sendResponse("Request body not valid JSON", 400, exchange);
         }
     }
 

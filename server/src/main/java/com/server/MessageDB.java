@@ -13,6 +13,7 @@ import java.util.List;
 import org.apache.commons.codec.digest.Crypt;
 
 import com.server.WarningMessage.DangerType;
+import com.server.WarningMessage.InvalidDangerTypeException;
 
 public class MessageDB {
 
@@ -127,24 +128,24 @@ public class MessageDB {
         return false;
     }
 
-    public List<WarningMessage> getAllMessages() throws SQLException {
+    public List<WarningMessage> getAllMessages() throws SQLException, InvalidDangerTypeException {
         ResultSet result = getAllMessagesStatement.executeQuery();
         return extractMessages(result);
     }
 
-    public List<WarningMessage> queryMessages(Query query) throws SQLException {
+    public List<WarningMessage> queryMessages(Query query) throws SQLException, InvalidDangerTypeException {
         PreparedStatement queryStatement = null;
         switch(query.getType()) {
-            case "user":
+            case USER:
                 queryStatement = queryUserStatement;
                 queryStatement.setString(1,query.getUser());
                 break;
-            case "time":
+            case TIME:
                 queryStatement = queryTimeStatement;
                 queryStatement.setLong(1, query.timeStartMillis());
                 queryStatement.setLong(2, query.timeEndMillis());
                 break;
-            case "location":
+            case LOCATION:
                 queryStatement = queryLocationStatement;
                 queryStatement.setDouble(1, query.getDownLongitude());
                 queryStatement.setDouble(2, query.getUpLongitude());
@@ -172,7 +173,9 @@ public class MessageDB {
             updateMessageStatement.setInt(9, message.getId());
             updateMessageStatement.executeUpdate();
         }
-        addNewMessage(message);
+        else {
+            addNewMessage(message);
+        }
     }
 
     private static void init() throws SQLException {
@@ -186,7 +189,7 @@ public class MessageDB {
         }
     }
     
-    private List<WarningMessage> extractMessages(ResultSet set) throws SQLException {
+    private List<WarningMessage> extractMessages(ResultSet set) throws SQLException, InvalidDangerTypeException {
         List<WarningMessage> results = new ArrayList<>();
         while(set.next()) {
             String nickname = set.getString("NICKNAME");

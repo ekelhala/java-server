@@ -22,6 +22,21 @@ public class WarningMessage {
         }
     }
 
+    public static class InvalidDangerTypeException extends Exception {
+
+        private String type;
+
+        public InvalidDangerTypeException(String type) {
+            super();
+            this.type = type;
+        }
+
+        @Override
+        public String getMessage() {
+            return "Danger type '" + type + "' not supported";
+        }
+    }
+
     private String nickname;
     private double latitude;
     private double longitude;
@@ -133,7 +148,7 @@ public class WarningMessage {
      * @return Uusi WarningMessage jossa on JSONObjectin määrittelemät tiedot
      * @throws JSONException Jos object ei sisällä kaikkia tarvittuja kenttiä
      */
-    public static WarningMessage fromJSON(JSONObject object) throws JSONException, DateTimeParseException {
+    public static WarningMessage fromJSON(JSONObject object) throws JSONException, DateTimeParseException, InvalidDangerTypeException {
         WarningMessage result = new WarningMessage(object.getString("nickname"), object.getDouble("latitude"),
                                     object.getDouble("longitude"), 
                                     verifyDangerType(object.getString("dangertype")),
@@ -196,7 +211,7 @@ public class WarningMessage {
     }
 
     //Apumetodi, jolla varmistetaan että DangerType on oikeanlainen
-    public static DangerType verifyDangerType(String typeString) {
+    public static DangerType verifyDangerType(String typeString) throws InvalidDangerTypeException {
         switch(typeString) {
             case "Moose":
                 return DangerType.MOOSE;
@@ -207,7 +222,7 @@ public class WarningMessage {
             case "Other":
                 return DangerType.OTHER;
             default:
-                return null;
+                throw new InvalidDangerTypeException(typeString);
         }
     }
 }

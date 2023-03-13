@@ -24,11 +24,11 @@ public class Server {
                 public void configure(HttpsParameters parameters) {
                     SSLContext context = getSSLContext();
                     SSLParameters sslParameters = context.getDefaultSSLParameters();
-                    //parameters.setSSLParameters(sslParameters);
+                    parameters.setSSLParameters(sslParameters);
                 }
             });
             MessageDB.open("msgdb.db");
-            WeatherClient.initialize(args[0], args[1]);
+            WeatherClient.initialize();
         }
         catch(Exception exception) {
             exception.printStackTrace();

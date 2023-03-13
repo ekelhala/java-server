@@ -2,21 +2,16 @@ package com.server;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.KeyStore;
-import java.security.cert.Certificate;
 
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManagerFactory;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -32,14 +27,11 @@ import org.w3c.dom.NodeList;
 
 public abstract class WeatherClient {
 
-    private static String serverAddress = "https://localhost:4001/weather";
+    private static String serverAddress = "http://localhost:4001/weather";
     private static URL requestURL;
-    private static String cert,certPass;
 
-    public static void initialize(String cert, String certPass) throws MalformedURLException {
+    public static void initialize() throws MalformedURLException {
         requestURL = new URL(serverAddress);
-        WeatherClient.cert = cert;
-        WeatherClient.certPass = certPass;
     }
 
     public static String getTemperature(double[] coordinates) {
@@ -47,7 +39,7 @@ public abstract class WeatherClient {
         String requestContent = buildRequestContent(requestBody);
         try {
             byte[] requestBytes = requestContent.getBytes("UTF-8");
-            HttpsURLConnection requestConnection = prepareRequest(requestBytes.length);
+            HttpURLConnection requestConnection = prepareRequest(requestBytes.length);
             String response = getResponse(requestConnection, requestBytes);
             Document responseDocument = parseResponse(response);
             Element rootElement = responseDocument.getDocumentElement();
@@ -70,7 +62,7 @@ public abstract class WeatherClient {
         }
     }
 
-    private static String getResponse(HttpsURLConnection connection, byte[] requestContent) {
+    private static String getResponse(HttpURLConnection connection, byte[] requestContent) {
         try {
             OutputStream contentOutput = connection.getOutputStream();
             contentOutput.write(requestContent);
@@ -93,20 +85,9 @@ public abstract class WeatherClient {
         }
     }
 
-    private static HttpsURLConnection prepareRequest(int contentLength) {
+    private static HttpURLConnection prepareRequest(int contentLength) {
         try {
-            KeyStore ks = KeyStore.getInstance("JKS");
-            ks.load(new FileInputStream(cert), certPass.toCharArray());
-            Certificate certificate = ks.getCertificate("alias");
-            KeyStore keyStore = KeyStore.getInstance("JKS");
-            keyStore.load(null, null);
-            keyStore.setCertificateEntry("localhost", certificate);
-            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("SunX509");
-            trustManagerFactory.init(keyStore);
-            SSLContext sslContext = SSLContext.getInstance("TLS");
-            sslContext.init(null, trustManagerFactory.getTrustManagers(), null);
-            HttpsURLConnection request = (HttpsURLConnection) requestURL.openConnection();
-            request.setSSLSocketFactory(sslContext.getSocketFactory());
+            HttpURLConnection request = (HttpURLConnection) requestURL.openConnection();
             request.setRequestMethod("POST");
             request.setRequestProperty("Content-Type", "application/xml");
             request.setRequestProperty("Content-Length", String.valueOf(contentLength));

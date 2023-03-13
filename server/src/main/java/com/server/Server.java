@@ -24,7 +24,7 @@ public class Server {
                 public void configure(HttpsParameters parameters) {
                     SSLContext context = getSSLContext();
                     SSLParameters sslParameters = context.getDefaultSSLParameters();
-                    parameters.setSSLParameters(sslParameters);
+                    //parameters.setSSLParameters(sslParameters);
                 }
             });
             MessageDB.open("msgdb.db");

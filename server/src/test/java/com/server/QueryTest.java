@@ -11,7 +11,7 @@ public class QueryTest {
     
     @Test(expected = InvalidQueryTypeException.class)
     public void testInvalidType() throws InvalidQueryTypeException {
-        Query.verifyQueryType("wrong");
+        Query.verifyQueryType("invalid");
     }
 
     @Test(expected = JSONException.class)

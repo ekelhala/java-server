@@ -15,6 +15,12 @@ import org.apache.commons.codec.digest.Crypt;
 import com.server.WarningMessage.DangerType;
 import com.server.WarningMessage.InvalidDangerTypeException;
 
+/**
+ * Tämä luokka mahdollistaa tietokantaan liittyvien luku- ja kirjoitusoperaatioiden suorittamisen.
+ * Luokka on toteutettu Singleton-periaatetta käyttäen, eli metodeja voidaan käyttää aluksi hankkimalla
+ * viittaus getInstance()-metodilla ja sen jälkeen kutsumalla muita luokan metodeja.
+ * Luokka on alustettava kutsumalla open()-metodia ennen kuin sitä voidaan käyttää tietokantaoperaatioiden suorittamiseen.
+ */
 public class MessageDB {
 
     private static MessageDB instance = null;
@@ -49,6 +55,10 @@ public class MessageDB {
             }
     }
 
+    /**
+     * Palauttaa viittauksen tähän luokkaan.
+     * @return MessageDB-objekti joka mahdollistaa tietokannan käyttämisen.
+     */
     public static synchronized MessageDB getInstance() {
         if(instance == null) {
             return new MessageDB();
@@ -56,6 +66,12 @@ public class MessageDB {
         return instance;
     }
 
+    /**
+     * Avaa yhteyden tietokantaan ja alustaa tämän luokan.
+     * 
+     * @param path osoite tietokantaan, johon yhteys avataan.
+     * @throws SQLException Mikäli yhteyden avaaminen epäonnistuu.
+     */
     public static void open(String path) throws SQLException {
         boolean exists = new File(path).isFile();
         connection = DriverManager.getConnection("jdbc:sqlite:"+path);
@@ -64,6 +80,12 @@ public class MessageDB {
         }
     }
 
+    /**
+     * Lisää käyttäjän uuden tietokantaan
+     * @param userToAdd Käyttäjä, joka halutaan lisätä.
+     * @return false, mikäli käyttäjä oli jo tietokannassa ja true mikäli ei.
+     * @throws SQLException Mikäli tapahtuu virhe tietokantaa käsitellessä.
+     */
     public boolean addNewUser(User userToAdd) throws SQLException {
         if(!doesUserExist(userToAdd)) {
             if(connection != null) {
@@ -85,6 +107,12 @@ public class MessageDB {
         return false;
     }
 
+    /**
+     * Tarkistaa, onko parametrina annettu käyttäjä jo tietokannassa.
+     * @param checkUser käyttäjä, joka halutaan tarkistaa
+     * @return false jos käyttäjä ei ole tietokannassa ja true jos on.
+     * @throws SQLException jos tietokantaa käsitellessä tapahtui virhe.
+     */
     private boolean doesUserExist(User checkUser) throws SQLException {
         if(connection != null) {
             checkUserStatement.setString(1, checkUser.getUsername());
@@ -95,11 +123,18 @@ public class MessageDB {
         return false;
     }
 
+    /**
+     * Tarkistaa, onko annettu käyttäjä tietokannassa ja onko käyttäjälle annettu salasana oikea.
+     * @param username tarkistettavan käyttäjän käyttäjänimi
+     * @param password tarkistettavan käyttäjän salasana
+     * @return true, mikäli käyttäjä on tietokannassa ja parametrina annettu salasana on oikea, false jos ei.
+     * @throws SQLException mikäli tietokantaa käsitellessä tapahtui virhe.
+     */
     public boolean validateUser(String username, String password) throws SQLException {
         if(connection != null) {
             validateUserStatement.setString(1, username);
             ResultSet results = validateUserStatement.executeQuery();
-            //If user exists, we go forward, otherwise return false
+            //Jos käyttäjä on olemassa, mennään eteenpäin, muuten palautetaan false
             if(results.next()) {
                 String passwordFromDB = results.getString("PASSWORD");
                 if(passwordFromDB.equals(Crypt.crypt(password, passwordFromDB)))
@@ -109,6 +144,12 @@ public class MessageDB {
         return false;
     }
 
+    /**
+     * Lisää uuden viestin tietokantaan.
+     * @param message viesti, joka halutaan tietokantaan lisätä.
+     * @return true, yhteys tietokantaan oli auki ja viesti voitiin lisätä, false jos ei.
+     * @throws SQLException mikäli tietokantaa käsitellessä tapahtui virhe.
+     */
     public boolean addNewMessage(WarningMessage message) throws SQLException {
         if(connection != null) {
             addNewMessageStatement.setString(1, message.getNickname());
@@ -128,11 +169,24 @@ public class MessageDB {
         return false;
     }
 
+    /**
+     * Palauttaa listan, joka sisältää kaikki tietokantaan tallennetut viestit.
+     * @return Lista WarningMessage-objekteja jotka kuvaavat kaikkia tietokannan viestejä
+     * @throws SQLException Mikäli tietokantaa käsitellessä tapahtui virhe
+     * @throws InvalidDangerTypeException Mikäli viestejä luodessa havaittiin vääräntyyppinen DangerType
+     */
     public List<WarningMessage> getAllMessages() throws SQLException, InvalidDangerTypeException {
         ResultSet result = getAllMessagesStatement.executeQuery();
         return extractMessages(result);
     }
 
+    /**
+     * Mahdollistaa tietyntyyppisten viestien hakemisen tietokannasta.
+     * @param query Kuvailee haluttujen viestin ominaisuudet
+     * @return Lista, joka sisältää halutut ehdot täyttävät viestit
+     * @throws SQLException Mikäli tietokantaa käsitellessä tapahtui virhe
+     * @throws InvalidDangerTypeException Mikäli viestejä luodessa havaittiin vääräntyyppinen DangerType
+     */
     public List<WarningMessage> queryMessages(Query query) throws SQLException, InvalidDangerTypeException {
         PreparedStatement queryStatement = null;
         switch(query.getType()) {
@@ -157,6 +211,12 @@ public class MessageDB {
         return extractMessages(set);
     }
 
+    /**
+     * Mahdollistaa tietokantaan tallennettujen viestien tallentamisen. Mikäli haluttua viestiä ei löytynyt, tallentaa uuden viestin
+     * tietokantaan.
+     * @param message kuvailee halutun viestin.
+     * @throws SQLException mikäli tietokantaa käsitellessä tapahtui virhe.
+     */
     public void editOrCreate(WarningMessage message) throws SQLException {
         checkMessageStatement.setInt(1, message.getId());
         checkMessageStatement.setString(2, message.getByUser());
@@ -178,6 +238,7 @@ public class MessageDB {
         }
     }
 
+    //Luo tietokannan
     private static void init() throws SQLException {
         if(connection != null) {
             String createUserTable = "create table users(USERNAME VARCHAR(60), PASSWORD VARCHAR(60), EMAIL VARCHAR(60)) ";
@@ -189,6 +250,7 @@ public class MessageDB {
         }
     }
     
+    //Apufunktio WarningMessage-listan luomiseen ResultSetistä.
     private List<WarningMessage> extractMessages(ResultSet set) throws SQLException, InvalidDangerTypeException {
         List<WarningMessage> results = new ArrayList<>();
         while(set.next()) {

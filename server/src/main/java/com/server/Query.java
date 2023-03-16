@@ -108,6 +108,13 @@ public class Query {
         return timeStart.toInstant().toEpochMilli();
     }
 
+    /**
+     * Luo uuden Query-objektin JSON-objektista
+     * @param withObject JSON-objekti, jossa tarvittavat tiedot uuden objektin luomista varten.
+     * @return Query-objekti jossa on JSON-objektin sisältämät tiedot oikeissa muuttujissaan.
+     * @throws JSONException Mikäli annetussa JSON-objektissa on vääräntyyppistä tietoa tai kenttiä puuttuu
+     * @throws InvalidQueryTypeException Mikäli QueryType ei ole sallittu
+     */
     public static Query fromJSON(JSONObject withObject) throws JSONException, InvalidQueryTypeException {
         QueryType queryType = verifyQueryType(withObject.getString("query"));
         switch(queryType) {
@@ -125,6 +132,12 @@ public class Query {
         }
     }
 
+    /**
+     * Tarkistaa annetun tekstin kelvollisuuden QueryTypeksi
+     * @param queryType tarkistettava teksti
+     * @return saatu QueryType, mikäli teksti oli kelvollinen
+     * @throws InvalidQueryTypeException mikäli tekstiä ei ole kelvollinen QueryType
+     */
     public static QueryType verifyQueryType(String queryType) throws InvalidQueryTypeException {
         switch(queryType) {
             case "time":
